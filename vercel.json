@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/",
+      "destination": "/typeduel_typing_test.html"
+    }
+  ]
+}
