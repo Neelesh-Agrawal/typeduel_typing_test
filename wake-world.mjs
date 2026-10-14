@@ -16,7 +16,9 @@ export class WakeWorld{
   const fill=new T.DirectionalLight('#82e8ff',2);fill.position.set(20,12,30);this.scene.add(fill);
   this.materials={orange:new T.MeshStandardMaterial({color:'#ff5b1a',metalness:.55,roughness:.23}),white:new T.MeshStandardMaterial({color:'#e6e9df',metalness:.5,roughness:.24}),metal:new T.MeshStandardMaterial({color:'#243347',metalness:.88,roughness:.22}),chrome:new T.MeshStandardMaterial({color:'#b4c4cb',metalness:.95,roughness:.17}),glass:new T.MeshStandardMaterial({color:'#042338',metalness:.85,roughness:.07}),cyan:new T.MeshStandardMaterial({color:'#65e9f9',emissive:'#11d9ee',emissiveIntensity:3,roughness:.3}),amber:new T.MeshStandardMaterial({color:'#ffc15b',emissive:'#ff7b25',emissiveIntensity:2.4}),dark:new T.MeshStandardMaterial({color:'#131e29',roughness:.8})};
   this.boxGeo=new T.BoxGeometry(1,1,1);this.cylinderGeo=new T.CylinderGeometry(1,1,1,16);
-  this.player=this.boat(this.materials.orange,'07');this.rival=this.boat(this.materials.white,'02');this.scene.add(this.player,this.rival);
+  this.materials.paint=this.materials.orange.clone();this.player=this.boat(this.materials.paint,'07');
+  // Milestone moods tint the storm; lightning flashes when the chase gets tense.
+  this.moodFog=new T.Color('#2a3f59');this.flash=0;this.rival=this.boat(this.materials.white,'02');this.scene.add(this.player,this.rival);
   this.sky=new T.TextureLoader().load('./assets/storm-horizon.png',texture=>{if(this.lost){texture.dispose();return;}texture.colorSpace=T.SRGBColorSpace;texture.mapping=T.EquirectangularReflectionMapping;this.scene.background=texture;this.scene.backgroundRotation.y=1.75;const pmrem=new T.PMREMGenerator(this.renderer);this.env=pmrem.fromEquirectangular(texture);this.scene.environment=this.env.texture;this.scene.environmentIntensity=.7;pmrem.dispose();});
   this.makeOcean();this.makeIslands();this.makeCourse();this.makeWake();
   this.composer=new EffectComposer(this.renderer);this.composer.addPass(new RenderPass(this.scene,this.camera));this.bloom=new UnrealBloomPass(new T.Vector2(900,600),.26,.5,1.1);this.composer.addPass(this.bloom);this.composer.addPass(new OutputPass());
@@ -86,15 +88,17 @@ export class WakeWorld{
   const shape=new T.Shape();shape.moveTo(-1.1,0);shape.lineTo(-6,28);shape.quadraticCurveTo(0,24,6,28);shape.lineTo(1.1,0);shape.closePath();this.wake=this.mesh(this.scene,new T.ShapeGeometry(shape),new T.MeshBasicMaterial({color:'#9ae3e4',opacity:.12,transparent:true,depthWrite:false,side:T.DoubleSide}));this.wake.rotation.x=Math.PI/2;this.wake.position.y=-.45;
  }
  resize(){if(this.lost)return;const height=visualViewport?.height||innerHeight;this.renderer.setPixelRatio(Math.min(devicePixelRatio,this.low?1:1.5));this.renderer.setSize(innerWidth,height,false);this.canvas.style.height=height+'px';this.camera.aspect=innerWidth/height;this.camera.updateProjectionMatrix();this.composer?.setSize(innerWidth,height);}
- render(dt,race,mode){if(this.lost)return;const active=mode==='race';if(mode==='paused')dt=0;this.time+=dt;const targetTravel=mode==='menu'?this.time*4:race.distance;const prev=this.travel;this.travel+=(targetTravel-this.travel)*(1-Math.exp(-dt*8));const v=active?race.velocity:7,boost=active&&race.boost>0;
+ setMood(fog){this.moodFog.set(fog);}
+ strike(){this.flash=1;}
+ render(dt,race,mode){if(this.lost)return;this.scene.fog.color.lerp(this.moodFog,1-Math.exp(-dt*1.2));this.flash=Math.max(0,this.flash-dt*3.5);this.renderer.toneMappingExposure=1.05+this.flash*(this.flash>.6?1.6:.4);const active=mode==='race';if(mode==='paused')dt=0;this.time+=dt;const targetTravel=mode==='menu'?this.time*4:race.distance;const prev=this.travel;this.travel+=(targetTravel-this.travel)*(1-Math.exp(-dt*8));const v=active?race.velocity:7,boost=active&&race.boost>0;
   this.waterMaterial.uniforms.uTime.value=this.time;this.waterMaterial.uniforms.uTravel.value=this.travel;this.waterMaterial.uniforms.uBoost.value=boost?1:0;
   const menu=mode==='menu';this.player.position.set(menu?8:0,.35+Math.sin(this.time*2.6)*.14+(boost?Math.sin(Math.min(1,(3-race.boost)*2)*Math.PI/2)*1.5:0),0);this.player.rotation.set(-.03-(boost?.09:0),menu?-.22:Math.sin(this.time*.7)*.025,this.reduced?0:Math.sin(this.time*1.5)*.035);this.player.userData.jets.forEach(j=>j.scale.setScalar(boost?1.5:1));
-  const gap=race.rival-race.distance;this.rival.position.set(menu?16:6.5,.35+Math.sin(this.time*2.4+1)*.14,menu?-16:T.MathUtils.clamp(-gap,-160,80));this.rival.rotation.z=-this.player.rotation.z;
+  const gap=race.rival-race.distance,narrow=innerWidth<700;this.rival.position.set(menu?16:(narrow?4.4:6.5),.35+Math.sin(this.time*2.4+1)*.14,menu?-16:T.MathUtils.clamp(-gap,-160,80));this.rival.rotation.z=-this.player.rotation.z;
   for(const o of this.islands){let z=(o.world-this.travel+110)%1100;if(z<0)z+=1100;o.g.position.z=110-z;}
   for(const o of this.course){let z=(o.world-this.travel+130)%1300;if(z<0)z+=1300;o.g.position.z=130-z;}
   this.rotors.forEach((r,i)=>r.rotation.z=this.time*(i%2?.08:-.1));
   const mobile=innerWidth<700,short=(visualViewport?.height||innerHeight)<500;
-  if(menu){this.cameraTarget.set(mobile?16:22,mobile?10:9,mobile?30:25);this.aim.set(mobile?6:1,1,-8);}else{this.cameraTarget.set(mobile?3:3.8,short?8:mobile?7:5.4,boost?20:18);this.aim.set(3,short?-.5:1,-22);}
+  if(menu){this.cameraTarget.set(mobile?16:22,mobile?10:9,mobile?30:25);this.aim.set(mobile?6:1,1,-8);}else{this.cameraTarget.set(mobile?1.4:3.8,short?8:mobile?8.5:5.4,boost?20:mobile?21:18);this.aim.set(mobile?1.8:3,short?-.5:mobile?.4:1,-22);}
   if(!menu&&this.cockpit){this.cameraTarget.set(0,this.player.position.y+2.4,-.6);this.aim.set(0,this.player.position.y+1.8,-55);}
   this.camera.position.lerp(this.cameraTarget,1-Math.exp(-dt*2.8));this.camera.lookAt(this.aim);const fov=58+(boost&&!this.reduced?7:0);this.camera.fov+=(fov-this.camera.fov)*(1-Math.exp(-dt*4));this.camera.updateProjectionMatrix();
   for(let i=0;i<this.foamLife.length;i++){this.foamLife[i]+=dt;if(this.foamLife[i]>2.1){this.foamLife[i]=0;this.foamPositions[i*3]=this.player.position.x+this.foamSide[i]*1.6;this.foamPositions[i*3+1]=-.3+Math.random()*.4;this.foamPositions[i*3+2]=3.2;}this.foamPositions[i*3]+=this.foamSide[i]*dt*2;this.foamPositions[i*3+1]+=(this.foamLife[i]<.3?1:-1)*dt*.6;this.foamPositions[i*3+2]+=dt*(v*.8+2);}
