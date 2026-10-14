@@ -1,0 +1,13 @@
+import assert from 'node:assert/strict';
+import {prefixLength,changedInput,metrics,rivalMeters,PASSAGES} from './wake-rules.mjs';
+assert.equal(prefixLength('sea','sea breeze'),3);
+assert.equal(prefixLength('seX','sea breeze'),2);
+assert.deepEqual(changedInput('se','seX','sea'),{attempts:1,errors:1});
+assert.deepEqual(changedInput('seX','se','sea'),{attempts:0,errors:0});
+assert.deepEqual(changedInput('se','sea','sea'),{attempts:1,errors:0});
+assert.equal(metrics(300,310,10,60).wpm,60);
+assert.equal(metrics(300,310,10,60).accuracy,97);
+assert.equal(rivalMeters(40,60),360);
+assert.equal(metrics(0,0,0,0).wpm,0);
+assert.ok(PASSAGES.every(p=>p.length>80&&p.length<140));
+console.log('WAKE rules: prefix lock, correction accounting, accuracy, race pace and authored passages passed.');
