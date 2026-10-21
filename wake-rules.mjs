@@ -1,41 +1,59 @@
-export const DURATION=Infinity;
-// Endless chase: the pace boat starts gentle and speeds up forever. Let it get
-// LOSE_GAP metres ahead and the run is over.
-export const START_PACE=26, PACE_RAMP=.2, MAX_PACE=130, LOSE_GAP=100, DANGER_GAP=65;
-export const paceAt=(start,t)=>Math.min(MAX_PACE,start+t*PACE_RAMP);
-export const METERS_PER_CHAR=1.8;
-export const PASSAGES=[
- 'The sea opens ahead of you. Keep your eyes on the horizon and let each word become a little more speed.',
- 'A bright orange buoy slips past the bow. Somewhere behind you, the wake draws a silver line across the blue.',
- 'Find the rhythm between the waves. A clean turn feels effortless, but every small correction makes it possible.',
- 'There is no shortcut across open water. Stay steady, breathe slowly, and make the next word your best one.',
- 'The islands rise like sculptures in the afternoon sun. You pass beneath a stone arch and chase the light beyond.',
- 'Speed is a conversation with the ocean. Listen to the engine, follow the current, and leave a beautiful wake.',
- 'A good race is built one moment at a time. Forget the last mistake and give the next sentence your attention.',
- 'Your rival is only a reference point. The real challenge is finding a pace that feels smooth enough to keep.',
- 'Sunlight breaks into a thousand pieces on the water. The finish is coming closer, so hold your line and go.',
- 'The boat lifts over a rolling wave. For a moment everything is quiet, then the engine answers with a roar.'
+export const COURSES=[
+ {name:'Harbor run',length:1400,speed:23,spacing:110,width:4.5,current:.3},
+ {name:'Turbine passage',length:1700,speed:28,spacing:100,width:3.8,current:.65},
+ {name:'Storm crossing',length:2000,speed:33,spacing:90,width:3.2,current:1}
 ];
-export function prefixLength(value,target){let i=0;while(i<value.length&&value[i]===target[i])i++;return i;}
-export function changedInput(previous,next,target){let common=0;while(common<previous.length&&common<next.length&&previous[common]===next[common])common++;let attempts=0,errors=0;for(let i=common;i<next.length;i++){attempts++;if(next[i]!==target[i])errors++;}return {attempts,errors};}
-export function metrics(correct,attempts,errors,elapsed){return {wpm:Math.round(correct/5/Math.max(elapsed/60,1/60)),accuracy:attempts?Math.max(0,Math.round((attempts-errors)/attempts*100)):100,distance:Math.round(correct*METERS_PER_CHAR)};}
-export function rivalMeters(pace,elapsed){return pace*5/60*elapsed*METERS_PER_CHAR;}
-
-export const RACE_LENGTH=Infinity, MILESTONE=250;
-export const PHRASES=['chase the last light','leave a silver wake','hold your line','ride the rising tide','ignite the horizon','find the open water','send it through the storm','keep the engine singing','make every word count','carve a cleaner course','fly above the foam','breathe and build speed','catch the amber light','thread the turbine gates','the sea belongs to you','full throttle into tomorrow','outpace your own shadow','one more perfect line'];
+export const UPGRADES=[
+ {id:'repair',name:'Reinforced hull',description:'Repair two hull points and add one extra point of protection.'},
+ {id:'boost',name:'Surge battery',description:'Gates charge boost 35% faster. Boost lasts one second longer.'},
+ {id:'handling',name:'Precision foils',description:'Turn 20% faster and reduce the pull of the current.'}
+];
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+export function courseObjects(level){
+ const c=COURSES[level],gates=[],debris=[];
+ for(let d=130,i=0;d<c.length-100;d+=c.spacing,i++){
+  const x=Math.sin(i*1.15+level*.65)*7.5;
+  gates.push({distance:d,x,width:c.width,passed:false,hit:false});
+  if(i>0){const side=i%2?1:-1;debris.push({distance:d-c.spacing*.47,x:clamp(x+side*(5.8-level*.4),-11,11),radius:1.4,passed:false});}
+ }
+ return {gates,debris};
+}
 export class WakeRace{
- constructor(pace=START_PACE){this.reset(pace);}
- reset(pace=this.pace){this.pace=pace;this.time=0;this.distance=0;this.rival=-30;this.velocity=5;this.rivalVelocity=5;this.charge=0;this.boost=0;this.boosts=0;this.correct=0;this.attempts=0;this.errors=0;this.combo=0;this.bestCombo=0;this.phrases=0;this.section=0;this.ended=false;this.won=false;this.rivalFinish=null;this.recent=[];this.events=[];this.milestone=0;this.danger=false;this.mods={boostRate:1,boostLength:0,rivalScale:1,idle:0,momentum:0,forgive:false};}
- key(count=1,errors=0){if(this.ended)return;this.attempts+=count+errors;this.errors+=errors;if(errors){if(!this.mods.forgive)this.combo=0;this.charge=Math.max(0,this.charge-5);this.events.push('error');}if(count){this.correct+=count;this.recent.push({time:this.time,count});this.charge=Math.min(100,this.charge+count*2.2*this.mods.boostRate);}}
- phrase(clean=true){if(this.ended)return;this.phrases++;if(clean){this.combo++;this.bestCombo=Math.max(this.bestCombo,this.combo);this.charge=Math.min(100,this.charge+15*this.mods.boostRate);this.events.push('perfect');}else this.combo=0;}
- activateBoost(){if(this.ended||this.charge<100||this.boost>0)return false;this.charge=0;this.boost=3+this.mods.boostLength;this.boosts++;this.events.push('boost');return true;}
- get currentPace(){return paceAt(this.pace,this.time);}
- get gap(){return this.rival-this.distance;}
- step(dt){if(this.ended)return;dt=Math.min(.1,Math.max(0,dt));this.time+=dt;this.recent=this.recent.filter(k=>k.time>this.time-2.4);const rate=this.recent.reduce((n,k)=>n+k.count,0)/2.4;const desired=5+this.mods.idle+Math.min(14,rate)*2.8*(1+this.mods.momentum*Math.min(this.combo,10)*.02)+(this.boost>0?16:0);this.velocity+=(desired-this.velocity)*(1-Math.exp(-dt*3.5));this.boost=Math.max(0,this.boost-dt);this.distance+=this.velocity*dt;
-  // The pace boat never drifts out of sight behind you, so it always stays a threat.
-  const rivalBoost=this.time%14>11?6:0,catchUp=this.gap<-40?6:0;this.rivalVelocity+=((5+this.currentPace/12*2.8)*this.mods.rivalScale+rivalBoost+catchUp-this.rivalVelocity)*(1-Math.exp(-dt*2));this.rival+=this.rivalVelocity*dt;
-  const mark=Math.floor(this.distance/MILESTONE);if(mark>this.milestone){this.milestone=mark;this.section=mark;this.events.push('sector');}
-  const danger=this.gap>DANGER_GAP;if(danger&&!this.danger)this.events.push('danger');this.danger=danger;
-  if(this.gap>=LOSE_GAP){this.ended=true;this.won=false;this.events.push('finish');}}
+ constructor(){this.reset();}
+ reset(){this.level=0;this.time=0;this.totalDistance=0;this.score=0;this.hull=4;this.maxHull=4;this.charge=0;this.boosts=0;this.totalGates=0;this.bestCombo=0;this.mods={boost:0,handling:0};this.ended=false;this.won=false;this.reason=null;this.events=[];this.beginCourse();}
+ beginCourse(){this.distance=0;this.velocity=12;this.x=0;this.turn=0;this.boost=0;this.invulnerable=0;this.penalty=0;this.combo=0;this.cleared=0;this.missed=0;this.state='racing';Object.assign(this,courseObjects(this.level));}
+ get course(){return COURSES[this.level];}
+ get required(){return Math.ceil(this.gates.length*.6);}
+ get nextGate(){return this.gates.find(g=>!g.passed);}
+ activateBoost(){if(this.state!=='racing'||this.charge<100||this.boost>0)return false;this.charge=0;this.boost=2.5+this.mods.boost;this.boosts++;this.events.push('boost');return true;}
+ damage(){if(this.invulnerable>0)return;this.hull--;this.invulnerable=1.4;this.penalty=1.5;this.combo=0;this.events.push('hit');if(this.hull<=0){this.state='finished';this.ended=true;this.events.push('finish');}}
+ step(dt,input={}){
+  if(this.state!=='racing')return;dt=clamp(dt,0,.05);const oldDistance=this.distance,oldX=this.x;
+  this.time+=dt;this.invulnerable=Math.max(0,this.invulnerable-dt);this.penalty=Math.max(0,this.penalty-dt);this.boost=Math.max(0,this.boost-dt);
+  const steer=clamp(input.steer||0,-1,1),brake=!!input.brake;
+  this.turn+=(steer-this.turn)*(1-Math.exp(-dt*10));
+  const current=Math.sin(this.distance*.023)*this.course.current/(1+this.mods.handling);
+  this.x=clamp(this.x+(steer*11*(1+.2*this.mods.handling)+current)*dt,-12,12);
+  const desired=this.course.speed*(brake?.58:1)*(this.penalty>0?.6:1)+(this.boost>0?18:0);
+  this.velocity+=(desired-this.velocity)*(1-Math.exp(-dt*3));this.distance=Math.min(this.course.length,this.distance+this.velocity*dt);this.totalDistance+=this.distance-oldDistance;
+  const crossingX=d=>oldX+(this.x-oldX)*clamp((d-oldDistance)/(this.distance-oldDistance||1),0,1);
+  for(const g of this.gates){if(g.passed||g.distance>this.distance)continue;g.passed=true;const offset=Math.abs(crossingX(g.distance)-g.x);g.hit=offset<=g.width;
+   if(g.hit){this.cleared++;this.totalGates++;this.combo++;this.bestCombo=Math.max(this.bestCombo,this.combo);this.score+=100+Math.min(this.combo,10)*25;this.charge=Math.min(100,this.charge+(offset<1.4?27:20)*(1+.35*this.mods.boost));this.events.push('gate');}
+   else{this.missed++;this.combo=0;this.penalty=.7;this.charge=Math.max(0,this.charge-10);this.events.push('miss');}
+   if(Math.abs(offset-(g.width+1.6))<1.35)this.damage();
+  }
+  for(const o of this.debris){if(o.passed||o.distance>this.distance)continue;o.passed=true;if(Math.abs(crossingX(o.distance)-o.x)<o.radius+1.1)this.damage();}
+  if(this.ended)return;
+  if(this.distance>=this.course.length){
+   if(this.cleared<this.required){this.ended=true;this.state='finished';this.reason='gates';this.events.push('finish');}
+   else if(this.level===COURSES.length-1){this.ended=true;this.won=true;this.state='finished';this.events.push('finish');}
+   else{this.state='upgrade';this.events.push('level');}
+  }
+ }
+ chooseUpgrade(id){if(this.state!=='upgrade'||!UPGRADES.some(u=>u.id===id))return false;
+  if(id==='repair'){this.maxHull++;this.hull=Math.min(this.maxHull,this.hull+2);}else this.mods[id]++;
+  this.level++;this.beginCourse();return true;
+ }
  drain(){return this.events.splice(0);}
 }
+
