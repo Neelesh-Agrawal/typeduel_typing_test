@@ -46,7 +46,7 @@ const world=Object.create(context.WakeWorld.prototype);
 world.boxGeo=new T.BoxGeometry();world.cylinderGeo=new T.CylinderGeometry();world.materials={};
 for(const k of ['metal','orange','white','chrome','glass','cyan','amber','dark'])world.materials[k]=new T.MeshBasicMaterial();
 world.decal=()=>world.materials.orange;
-Object.assign(world,{player:world.boat(world.materials.orange,'07'),rival:new T.Group(),camera:new T.PerspectiveCamera(58,390/844,.1,2000),cameraTarget:new T.Vector3(),aim:new T.Vector3(),time:0,travel:0,flash:0,low:true,reduced:false,scene:{fog:{color:new T.Color()}},moodFog:new T.Color(),renderer:{render(){}},waterMaterial:{uniforms:{uTime:{},uTravel:{},uBoost:{}}},islands:[],course:[],rotors:[],slalom:new T.Group(),gateMeshes:[],debrisMeshes:[],finishGate:new T.Group(),foamLife:new Float32Array(0),foamGeo:{attributes:{position:{}}},foam:{},wake:new T.Group()});
+Object.assign(world,{player:world.boat(world.materials.orange,'07'),rival:new T.Group(),camera:new T.PerspectiveCamera(58,390/844,.1,2000),cameraTarget:new T.Vector3(),aim:new T.Vector3(),time:0,travel:0,flash:0,low:true,reduced:false,scene:{fog:{color:new T.Color()}},moodFog:new T.Color(),renderer:{render(){}},waterMaterial:{uniforms:{uTime:{},uTravel:{},uBoost:{}}},islands:[],course:[],rotors:[],slalom:new T.Group(),gateMeshes:[],debrisMeshes:[],actionMeshes:[],finishGate:new T.Group(),foamLife:new Float32Array(0),foamGeo:{attributes:{position:{}}},foam:{},wake:new T.Group()});
 const point=new T.Vector3();
 for(const sign of [-1,1]){
  const race=new WakeRace();race.gates=[];race.debris=[];race.mods.handling=2;race.level=2;
@@ -63,3 +63,4 @@ for(const sign of [-1,1]){
  assert.equal(race.x,sign*12,'test reaches both channel edges');
 }
 console.log('Wake phone framing passed: actual boat geometry stays visible across both channel edges, including maximum handling and storm current at390x844.');
+

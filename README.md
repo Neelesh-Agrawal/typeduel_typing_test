@@ -13,3 +13,17 @@ Run `python tools/serve_arcade.py` from the collection root and open `/Day43/typ
 
 All runtime assets are local. Three.js is licensed under MIT (vendor/THREE-LICENSE.txt). The existing generated storm sky and its provenance remain in assets/.
 
+
+## Action update — October 22
+
+Wake now includes full-width breaking waves (W/up/Jump) and low bridge beams (hold S/down/Duck), in addition to steering gates and wreckage. Encounters are spaced more tightly on later courses. Speed also ramps by up to 9m/s inside each course, and the camera field of view reacts to speed/boost. Near debris passes reward 75 points and boost charge; clean wave/bridge clearances reward 150 points and charge. Two-and-a-half-second approach warnings explain the required action without pausing. Upgrades remain at completed course boundaries. New scoring uses wake-action-v2-best.
+
+Tests cover wrong/right reactions, jump guards, increasing speed, all three courses at 30/60/144Hz, collision sweeps and phone camera framing. This update is local for player evaluation, not a claim of subjective enjoyment.
+
+## Local opponents
+
+Five deterministic computer-controlled pilots (Vela, Rook, Nova, Mako and Ember) share each course. Distinct coloured liveries, varied hull proportions and fins make their boats readable. They steer gates, avoid wreckage/nearby boats, jump waves, duck bridges and build boost from successful encounters. Each has its own pace. No network or other human players are required.
+
+The HUD shows position out of six and explicitly labels opponents as bots. Finish places use actual crossing times. Rivals freeze during upgrade breaks and reset to an organised grid for each course. There is no distance teleport or speed catch-up tied to the player. Boat wakes use shared lightweight geometry and disappear in low graphics mode.
+
+Rival regressions verify distinct boats, independent progress, actual boost overtakes, finish-time rankings, frozen breaks and reset. These changes remain local pending playtesting.

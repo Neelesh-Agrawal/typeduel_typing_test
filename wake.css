@@ -3,3 +3,7 @@
 @media(max-height:600px){.panel{top:56%;transform:translateY(-50%)}h1{font-size:48px;margin-bottom:12px}.instructions{margin:12px 0;gap:8px}.intro p{margin:10px 0;font-size:15px}.best{display:none}.menu-panel{gap:8px}.menu-panel h2{font-size:28px}.menu-help{margin:0}.menu-panel button{min-height:40px;padding:8px 14px}.overlay{align-items:start}.readouts{gap:15px}#hud{top:76px}}
 @media(prefers-reduced-motion:reduce){button:active{transform:none}}
 
+
+#hazard-warning{position:fixed;top:31%;left:50%;transform:translateX(-50%);z-index:3;background:#101e2ef2;color:#ffe0ad;border:1px solid #ffbc73;padding:12px 18px;border-radius:5px;font-size:17px;font-weight:750;text-align:center;max-width:94%;pointer-events:none}#jump{min-height:62px;background:#183d50}#controls{gap:10px}@media(max-width:700px){#controls{left:12px;right:12px;gap:8px}#jump,#brake{width:76px;padding:10px;min-height:58px}#boost{width:140px;padding:10px}#hazard-warning{font-size:14px;top:27%;width:calc(100% - 32px)}.instructions{gap:8px}.intro h1{font-size:54px}.intro p{margin-bottom:14px}.instructions dd{font-size:13px}}
+
+@media(max-width:700px){.readouts{gap:15px}.readouts b{font-size:20px}.readouts span{font-size:11px}}
