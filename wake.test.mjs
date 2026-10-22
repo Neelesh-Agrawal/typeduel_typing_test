@@ -53,12 +53,12 @@ for(const sign of [-1,1]){
  world.camera.position.set(0,10,28);
  for(let frame=0;frame<180;frame++){
   race.step(1/60,{steer:sign});world.render(1/60,race,'race');world.camera.updateMatrixWorld();world.player.updateMatrixWorld(true);
-  world.player.traverse(mesh=>{if(!mesh.isMesh)return;const vertices=mesh.geometry.attributes.position;for(let i=0;i<vertices.count;i++){
-   point.fromBufferAttribute(vertices,i).applyMatrix4(mesh.matrixWorld).project(world.camera);
+  world.player.traverse(mesh=>{if(!mesh.isMesh)return;const vertices=mesh.geometry.attributes.position;const instanceMatrix=new T.Matrix4();for(let instance=0;instance<(mesh.isInstancedMesh?mesh.count:1);instance++){if(mesh.isInstancedMesh)mesh.getMatrixAt(instance,instanceMatrix);else instanceMatrix.identity();for(let i=0;i<vertices.count;i++){
+   point.fromBufferAttribute(vertices,i).applyMatrix4(instanceMatrix).applyMatrix4(mesh.matrixWorld).project(world.camera);
    const x=(point.x+1)*195,y=(1-point.y)*422;
    assert(x>=12&&x<=378,`Phone steering clips boat at x=${x.toFixed(1)}, frame=${frame}, direction=${sign}`);
    assert(y>=150&&y<=700,`Boat overlaps phone HUD or controls at y=${y.toFixed(1)}`);
-  }});
+  }}});
  }
  assert.equal(race.x,sign*12,'test reaches both channel edges');
 }

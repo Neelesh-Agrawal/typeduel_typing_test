@@ -1,0 +1,1 @@
+export function advanceRace(race,elapsed,input){let remaining=Math.min(.2,Math.max(0,elapsed));while(remaining>1e-8&&race.state==='racing'){const dt=Math.min(1/120,remaining);race.step(dt,input);remaining-=dt;}}

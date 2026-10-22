@@ -39,3 +39,8 @@ const beforeBoost=field.distance-field.rivals[0].distance;field.charge=100;asser
 field.distance=100;field.finishTime=null;field.rivals.forEach((b,i)=>{b.distance=i<2?110:90;});assert.equal(field.rank,3);field.finishTime=50;field.rivals.forEach((b,i)=>{b.finishTime=i<2?49:i===2?51:null;});assert.equal(field.rank,3,'rank uses crossing times after player finishes');
 field.state='upgrade';const still=JSON.stringify(field.rivals);for(let i=0;i<100;i++)field.step(1/60);assert.equal(JSON.stringify(field.rivals),still,'rivals freeze for upgrades');field.reset();assert.equal(field.rank,3);assert(field.rivals.every(b=>b.finishTime===null));
 console.log('Wake rivals passed: five distinct bots, independent movement, boost overtakes, crossing-time ranking, frozen intermission and reset.');
+
+const {advanceRace}=await import('./wake-clock.mjs');
+function timedRun(hz){const r=new WakeRace();r.gates=[];r.debris=[];r.hazards=[];for(let i=0;i<hz*20;i++)advanceRace(r,1/hz,{steer:0});return r;}
+const slowFrames=timedRun(10),fastFrames=timedRun(60);assert(Math.abs(slowFrames.time-20)<.001);assert(Math.abs(slowFrames.distance-fastFrames.distance)<.01,'slow rendering must not discard time and make racing crawl');assert(Math.abs(slowFrames.velocity-fastFrames.velocity)<.001);
+console.log('Wake timing passed: 10fps and60fps consume the same real time and cover the same distance.');

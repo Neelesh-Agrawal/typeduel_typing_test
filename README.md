@@ -27,3 +27,9 @@ Five deterministic computer-controlled pilots (Vela, Rook, Nova, Mako and Ember)
 The HUD shows position out of six and explicitly labels opponents as bots. Finish places use actual crossing times. Rivals freeze during upgrade breaks and reset to an organised grid for each course. There is no distance teleport or speed catch-up tied to the player. Boat wakes use shared lightweight geometry and disappear in low graphics mode.
 
 Rival regressions verify distinct boats, independent progress, actual boost overtakes, finish-time rankings, frozen breaks and reset. These changes remain local pending playtesting.
+
+## Speed feedback correction
+
+The camera now follows closer to the water with a wider, speed-responsive field of view. Nearby channel buoys and fine water ripples move at the same distance rate as the race, and the water wave direction is corrected. The sky and ocean art remain. Repeated hull hardware is instanced to reduce draw calls.
+
+The render loop now consumes elapsed time with small physics substeps: it no longer discards time on 10fps frames. A regression verifies equal travel at 10/60fps. Phone framing tests now project actual instanced vertices through the updated camera. Browser testing caught and corrected a GLSL reserved identifier before delivery. No measured device FPS or subjective enjoyment claim is made. Local playtest changes are not published.

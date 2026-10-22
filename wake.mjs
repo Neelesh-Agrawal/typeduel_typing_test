@@ -1,5 +1,6 @@
-import {WakeWorld} from './wake-world.mjs?v=rivals-3';
-import {WakeRace,COURSES,UPGRADES} from './wake-rules.mjs?v=rivals-3';
+import {advanceRace} from './wake-clock.mjs';
+import {WakeWorld} from './wake-world.mjs?v=speed-4';
+import {WakeRace,COURSES,UPGRADES} from './wake-rules.mjs?v=speed-4';
 const $=id=>document.getElementById(id),canvas=$('sea'),race=new WakeRace();
 const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
 let mode='menu',low=reduced,sound=false,world,last=performance.now(),noticeTime=0,lost=false,audio,engine,gain,drag=null,touchBrake=false;
@@ -35,8 +36,8 @@ canvas.addEventListener('pointermove',e=>{if(drag?.id===e.pointerId)drag.target=
 const release=e=>{if(drag?.id===e.pointerId)drag=null;};canvas.addEventListener('pointerup',release);canvas.addEventListener('pointercancel',release);canvas.addEventListener('lostpointercapture',release);
 $('brake').addEventListener('pointerdown',e=>{if(mode!=='race')return;e.preventDefault();$('brake').setPointerCapture(e.pointerId);touchBrake=true;});for(const name of ['pointerup','pointercancel','lostpointercapture'])$('brake').addEventListener(name,()=>touchBrake=false);
 addEventListener('blur',pause);document.addEventListener('visibilitychange',()=>{if(document.hidden)pause();});addEventListener('resize',()=>world?.resize());visualViewport?.addEventListener('resize',()=>world?.resize());canvas.addEventListener('webglcontextlost',e=>{e.preventDefault();fail();});
-function frame(now){if(lost)return;requestAnimationFrame(frame);const dt=Math.min(.05,Math.max(0,(now-last)/1000));last=now;
- if(mode==='race'){const steer=drag?Math.max(-1,Math.min(1,(drag.target-race.x)*2)):(keys.has('ArrowRight')||keys.has('KeyD')?1:0)-(keys.has('ArrowLeft')||keys.has('KeyA')?1:0);race.step(dt,{steer,brake:touchBrake||keys.has('ArrowDown')||keys.has('KeyS')});for(const event of race.drain()){if(event==='clear'){notice('Clean clearance · +150');tone(850,1.4);}if(event==='close'){notice('Close pass · +75');tone(750,1.2);}if(event==='gate')tone(650+race.combo*25);if(event==='miss')notice('Gate missed');if(event==='hit'){notice('Hull hit');tone(100,.6);}if(event==='level')intermission();if(event==='finish')finish();}stats();}
+function frame(now){if(lost)return;requestAnimationFrame(frame);const dt=Math.min(.2,Math.max(0,(now-last)/1000));last=now;
+ if(mode==='race'){const steer=drag?Math.max(-1,Math.min(1,(drag.target-race.x)*2)):(keys.has('ArrowRight')||keys.has('KeyD')?1:0)-(keys.has('ArrowLeft')||keys.has('KeyA')?1:0);advanceRace(race,dt,{steer,brake:touchBrake||keys.has('ArrowDown')||keys.has('KeyS')});for(const event of race.drain()){if(event==='clear'){notice('Clean clearance · +150');tone(850,1.4);}if(event==='close'){notice('Close pass · +75');tone(750,1.2);}if(event==='gate')tone(650+race.combo*25);if(event==='miss')notice('Gate missed');if(event==='hit'){notice('Hull hit');tone(100,.6);}if(event==='level')intermission();if(event==='finish')finish();}stats();}
  noticeTime=Math.max(0,noticeTime-dt);$('notice').style.opacity=noticeTime>0?'1':'0';world.render(['paused','upgrade','result'].includes(mode)?0:dt,race,mode);if(gain){gain.gain.setTargetAtTime(sound&&mode==='race'?.035:0,audio.currentTime,.1);engine.frequency.setTargetAtTime(45+race.velocity*3,audio.currentTime,.1);}}
 showBest();screens();if(!lost)requestAnimationFrame(frame);
 
